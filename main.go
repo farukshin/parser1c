@@ -1,28 +1,26 @@
 package main
 
 import (
-	"fmt"
-	"time"
+	"log"
+	"os"
 )
 
-type Event struct {
-	Time       time.Time
-	Duration   uint64
-	EventName  string
-	EventNum   string
-	Properties []*Properties
-	Log        string
-}
-
-type Properties struct {
-	key   string
-	value string
-}
-
-type parser interface {
-	parse(filename string, text string) ([]*Event, error)
+type application struct {
+	errorLog *log.Logger
+	infoLog  *log.Logger
+	version  string
 }
 
 func main() {
-	fmt.Println("Hello parser")
+
+	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
+	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
+
+	app := &application{
+		errorLog: errorLog,
+		infoLog:  infoLog,
+		version:  "v.0.1.0",
+	}
+
+	app.parseArgs()
 }
