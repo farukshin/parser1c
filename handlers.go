@@ -4,7 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
+	"sync"
 )
 
 func (app *application) getVersion() {
@@ -25,6 +27,7 @@ func (app *application) help_home() {
 	sb.WriteString("-v --version - версия приложения\n")
 	sb.WriteString("--input - каталог с логами технологического журнала или имя файла с логами\n")
 	sb.WriteString("--format - формат вывода")
+	sb.WriteString("--countRuner - количество потоков парсера, по умолчанию 4, минимум 1")
 
 	fmt.Println(sb.String())
 }
@@ -76,20 +79,25 @@ func isArgsAll(ar string) bool {
 
 func (app *application) parse() {
 
-	if !isArgsAll("--input,--format") {
+	if !isArgsAll("--input,--format,--output") {
 		app.help_home()
 		return
 	}
 	input, erri := getArgs("--input")
+	output, erro := getArgs("--output")
 	format, errf := getArgs("--format")
 	debug, _ := getArgs("--debug")
-	if input == "" || erri != nil || errf != nil {
+	countRunerStr, _ := getArgs("--countRuner")
+	if input == "" || erri != nil || errf != nil || erro != nil {
 		app.help_home()
 		return
 	}
 	if format == "" {
 		format = "json"
 	}
-	p := parser{input: input, format: format, debug: debug}
+	countRuner, _ := strconv.Atoi(countRunerStr)
+	p := parser{Input: input, Output: output, Format: format, Debug: debug, CountRuner: countRuner}
+	p.initMapFieldName()
+	p.mapFieldNameMutex = sync.RWMutex{}
 	p.run()
 }

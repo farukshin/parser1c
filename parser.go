@@ -1,41 +1,135 @@
 package main
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
 )
 
-func (p *parser) run() {
+func (p *parser) worker(id int, jobs <-chan string, results chan<- []*Event) {
+	for j := range jobs {
+		events := p.checkFiles(j, 0)
+		results <- events
+	}
+}
 
-	p.checkFiles(p.input, 0)
+func (p *parser) searchFiles() error {
+
+	f, err := os.Stat(p.Input)
+	if err != nil {
+		return err
+	}
+	if f.IsDir() {
+		p.ListDir(p.Input)
+	} else if len(p.Input) >= 4 && p.Input[len(p.Input)-4:] == ".log" {
+		p.Files = append(p.Files, p.Input)
+	} else {
+		return errors.New("Не удалось прочитать из input = " + p.Input)
+	}
+	return nil
+
+}
+func (p *parser) run() error {
+
+	err := p.searchFiles()
+	if err != nil {
+		return err
+	}
+
+	if p.CountRuner == 0 {
+		p.CountRuner = 1
+	}
+	cntWorkers := p.CountRuner
+	jobs := make(chan string, len(p.Files))
+	results := make(chan []*Event, len(p.Files))
+	for w := 1; w <= cntWorkers; w++ {
+		go p.worker(w, jobs, results)
+	}
+	for _, file := range p.Files {
+		jobs <- file
+	}
+	close(jobs)
+
+	file, err := os.Create(p.Output)
+	if err != nil {
+		fmt.Println("Unable to create file:", err)
+		os.Exit(1)
+	}
+	defer file.Close()
+	//file.WriteString("{\"events\":[\n")
+
+	/*var sep = ""
+	for a := 1; a <= len(p.Files); a++ {
+		events := <-results
+		for i, s := range events {
+			res1B, _ := json.Marshal(s)
+			file.WriteString(sep + string(res1B))
+			if i == 0 {
+				sep = ",\n"
+			}
+		}
+	}
+	file.WriteString("\n]}")*/
+
+	var sb strings.Builder
+	sb.WriteString("{\"events\":[\n")
+
+	for a := 1; a <= len(p.Files); a++ {
+		events := <-results
+		for i, s := range events {
+			if s == nil {
+				continue
+			}
+			if i != 0 {
+				sb.WriteString(",\n")
+			}
+			//res1B, _ := json.Marshal(s)
+			sb.WriteString(string(s.String()))
+		}
+	}
+	sb.WriteString("]}")
+	file.WriteString(sb.String())
+	return nil
+}
+
+func (p *parser) initMapFieldName() {
+	p.MapFieldName = map[string]string{"ConnectString": "connectstring", "ServiceName": "servicename", "res": "res", "OSThread": "osthread", "ExtData": "extdata", "SESN1process": "sesnQprocess", "ClientID": "clientid", "Err": "err", "Appl": "appl", "DstId": "dstid", "p:processName": "pprocessname", "DataBase": "database", "Url": "url", "Event": "event", "SrcId": "srcid", "ID": "id", "Info": "info", "process": "process", "ATTN0process": "attnPprocess", "t:clientID": "tclientid", "IB": "ib", "TargetCall": "targetcall", "DBMS": "dbms", "Context": "context", "SrcName": "srcname", "t:applicationName": "tapplicationname", "ApplicationExt": "applicationext", "Data": "data", "Protected": "protected", "ProcessId": "processid", "t:computerName": "tcomputername", "DstAddr": "dstaddr", "SessionID": "sessionid", "txt": "txt", "AgentUrl": "agenturl", "CONN0process": "connPprocess", "ClientComputerName": "clientcomputername", "DstPid": "dstpid", "DistribData": "distribdata", "RmngrURL": "rmngrurl", "CONN2process": "connRprocess", "CallID": "callid", "Result": "result", "Request": "request", "Pid": "pid", "InfoBase": "infobase", "Message": "message", "ServerComputerName": "servercomputername", "t:connectID": "tconnectid", "Usr": "usr", "CONN1process": "connQprocess", "Administrator": "administrator", "SrcAddr": "srcaddr", "MName": "mname", "EXCP0process": "excpPprocess", "Ref": "ref", "Nmb": "nmb", "UserName": "username", "Func": "func", "SrcPid": "srcpid", "Calls": "calls", "Txt": "txt", "Descr": "descr", "Exception": "exception"}
+}
+
+func (p *parser) ListDir(path string) {
+
+	if len(path) > 0 && path[len(path)-1] != '/' {
+		path = path + "/"
+	}
+
+	lst, err := ioutil.ReadDir(path)
+	if err != nil {
+		return
+	}
+	for _, val := range lst {
+		name := val.Name()
+		if val.IsDir() {
+			p.ListDir(path + val.Name())
+		} else if len(name) > 4 && name[len(name)-4:] == ".log" {
+			p.Files = append(p.Files, path+name)
+		}
+	}
 
 }
 
-func (p *parser) checkFiles(fileName string, pos int) {
+func (p *parser) checkFiles(fileName string, pos int) []*Event {
 
 	eventsString, _, _ := parseFile(fileName, pos)
 	time, _ := p.GetTimeFromFileName(fileName)
 	events, _ := p.getEvetsFromString(eventsString, time)
 
-	var sb strings.Builder
-	sb.WriteString("{\"events\":[\n")
+	return events
 
-	for i, s := range events {
-		if i != 0 {
-			sb.WriteString(",\n")
-		}
-		res1B, _ := json.Marshal(s)
-		sb.WriteString(string(res1B))
-	}
-	sb.WriteString("]}")
-	fmt.Print(sb.String())
 }
 
 func (p *parser) GetTimeFromFileName(fileName string) (time.Time, error) {
@@ -76,6 +170,13 @@ func isNumber(ch byte) bool {
 	return ch >= '0' && ch <= '9'
 }
 
+func isLowerChar(ch byte) bool {
+	return ch >= 'a' && ch <= 'z'
+}
+func isChar(ch byte) bool {
+	return ch >= 'A' && ch <= 'Z' || ch >= 'a' && ch <= 'z'
+}
+
 func isBeginEvent(str string) bool {
 	success := len(str) >= 15 && str[2] == ':' && str[5] == '.' && str[12] == '-'
 	if !success {
@@ -108,11 +209,11 @@ func (p *parser) parseLogLine(log string, timebase time.Time) (*Event, error) {
 	comma3 := secondComma + 1 + strings.Index(log[secondComma+1:], ",")
 
 	ev := Event{}
-	if p.debug == "1" || p.debug == "true" {
+	if p.Debug == "1" || p.Debug == "true" {
 		ev.Log = log
 	}
 	ev.EventName = log[firstComma+1 : secondComma]
-	ev.EventNum = log[secondComma+1 : comma3]
+	ev.EventLevel = log[secondComma+1 : comma3]
 	duration, err := getUint64FromString(log[tire1+1 : firstComma])
 	if err != nil {
 		return nil, errors.New("Не удалось распарсить лог '" + log + "'")
@@ -124,13 +225,13 @@ func (p *parser) parseLogLine(log string, timebase time.Time) (*Event, error) {
 
 	prop := strings.Split(log, ",")
 	ost := ""
-	for _, p := range prop {
-		properties, success := checkProperties(ost + p)
+	for _, pr := range prop {
+		properties, success := p.checkProperties(ost + pr)
 		if success {
 			ev.Properties = append(ev.Properties, properties)
 			ost = ""
 		} else {
-			ost = ost + p
+			ost = ost + pr
 		}
 	}
 	if ost != "" {
@@ -175,14 +276,14 @@ func getUint64FromString(str string) (uint64, error) {
 }
 
 func (p *parser) getEvetsFromString(events []string, time time.Time) ([]*Event, error) {
-	var res []*Event
-
-	for _, ev := range events {
+	var res = make([]*Event, len(events))
+	for i, ev := range events {
 		e, err := p.parseLogLine(ev, time)
 		if err != nil {
-			continue
+			//continue
 		}
-		res = append(res, e)
+		//res = append(res, e)
+		res[i] = e
 	}
 	return res, nil
 }
@@ -255,28 +356,37 @@ func check(e error) {
 	}
 }
 
-func checkProperties(p string) (*Properties, bool) {
+func (p *parser) checkProperties(str string) (*Properties, bool) {
 
-	pos_ravno := strings.Index(p, "=")
-	if pos_ravno > 0 && len(p)-1 > pos_ravno && pos_ravno != 0 &&
-		(p[pos_ravno+1] != '\'' ||
-			p[pos_ravno+1] == '\'' && len(p)-2 > pos_ravno && p[len(p)-1] == '\'') {
+	pos_ravno := strings.Index(str, "=")
+	if pos_ravno > 0 && len(str)-1 > pos_ravno && pos_ravno != 0 &&
+		(str[pos_ravno+1] != '\'' ||
+			str[pos_ravno+1] == '\'' && len(str)-2 > pos_ravno && str[len(str)-1] == '\'') || pos_ravno > 0 && len(str)-1 == pos_ravno && pos_ravno != 0 {
 		res := Properties{}
-		res.Key = strToFieldName(p[0:pos_ravno])
-		res.Value = p[pos_ravno+1:]
-		return &res, true
-	} else if pos_ravno > 0 && len(p)-1 == pos_ravno && pos_ravno != 0 {
-		res := Properties{}
-		res.Key = strToFieldName(p[0:pos_ravno])
-		res.Value = p[pos_ravno+1:]
+		res.Key = p.strToFieldName(str[0:pos_ravno])
+		res.Value = str[pos_ravno+1:]
 		return &res, true
 	}
 	return nil, false
 }
 
-func strToFieldName(str string) string {
-	res := strings.ToLower(str)
-	re := regexp.MustCompile("[a-z0-9]+")
-	res = strings.Join(re.FindAllString(res, -1), "")
-	return res
+func (p *parser) strToFieldName(str string) string {
+
+	val, ok := p.MapFieldName[str]
+	if ok {
+		return val
+	}
+
+	var cur byte
+	var res []byte
+	for i := 0; i < len(str); i++ {
+		if isChar(str[i]) || isNumber(str[i]) {
+			cur = str[i]
+			if !isLowerChar(str[i]) {
+				cur = 'a' + (str[i] - 'A')
+			}
+			res = append(res, cur)
+		}
+	}
+	return string(res)
 }

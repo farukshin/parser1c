@@ -5,9 +5,14 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Home (по умолчанию)",
+            "name": "Парсинг файла",
             "type": "go",
             "args": ["--input=./example/TJ/rphost_160/24051511.log", "--format=json"]
+        },
+        {
+            "name": "Парсинг каталога",
+            "type": "go",
+            "args": ["--input=./example/TJ/", "--format=json", "--output=./out.json"]
         },
         {
             "name": "Version",

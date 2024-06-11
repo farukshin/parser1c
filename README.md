@@ -1,5 +1,5 @@
 # parser_tj_1c
-Парсер логов технологического журнала 1С
+Парсер логов технологического журнала 1С, в несколько потоков
 
 ## Установка
 
@@ -19,5 +19,5 @@ go build .
 
 Выгрузка в формат JSON
 ```
-./parser_tj_1c -i="./example/TJ/" -f="json" > log.json
+./parser_tj_1c --input=./example/TJ/rphost_160/24051511.log --format=json --countRuner=4 --output=./log.json
 ```
