@@ -31,7 +31,7 @@ func main() {
 	app := &application{
 		errorLog: errorLog,
 		infoLog:  infoLog,
-		version:  "v.0.1.2",
+		version:  "v.0.1.3",
 	}
 
 	app.parseArgs()

@@ -1,3 +1,3 @@
-module farukshin.com/parser_tj_1c
+module farukshin.com/parser1c
 
 go 1.21.5

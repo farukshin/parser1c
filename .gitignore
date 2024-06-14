@@ -1,3 +1,4 @@
 parser_tj_1c
 /example/*
 *.prof
+dist/

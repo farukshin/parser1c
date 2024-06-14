@@ -1,23 +1,23 @@
-# parser_tj_1c
+# parser1c
 Парсер логов технологического журнала 1С, в несколько потоков
 
 ## Установка
 
 ```
-git clone https://github.com/farukshin/parser_tj_1c.git
-cd parser_tj_1c
+git clone https://github.com/farukshin/parser1c.git
+cd parser1c
 go build .
-./parser_tj_1c --version
+./parser1c --version
 ```
 
 ## Использование
 
 Справка
 ```
-./parser_tj_1c --help
+./parser1c --help
 ```
 
 Выгрузка в формат JSON
 ```
-./parser_tj_1c --input=./example/TJ/rphost_160/24051511.log --format=json --countRuner=4 --output=./log.json
+./parser1c --input=./example/TJ/ --format=json --countRuner=4 --output=./log.json
 ```
