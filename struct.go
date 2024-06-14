@@ -56,21 +56,4 @@ func (e *Event) String() string {
 		strings.Join(l, ","),
 		e.Log)
 
-	/*
-		sb.WriteString("{\"events\":[\n")
-
-		for a := 1; a <= len(p.Files); a++ {
-			events := <-results
-			for i, s := range events {
-				if i != 0 {
-					sb.WriteString(",\n")
-				}
-				res1B, _ := json.Marshal(s)
-				sb.WriteString(string(res1B))
-			}
-		}
-		sb.WriteString("]}")
-		file.WriteString(sb.String())
-
-		return fmt.Sprintf("{\"%s\": \"%s\"}", e.Key, e.Value)*/
 }

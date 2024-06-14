@@ -6,28 +6,29 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"sync"
 )
 
 func (app *application) getVersion() {
-	fmt.Printf("parser_tj_1c %s\n", app.version)
+	fmt.Printf("parser1c %s\n", app.version)
 }
 
 func (app *application) help_home() {
 
 	var sb strings.Builder
-	sb.WriteString("Не корректное использование\n\n")
+	sb.WriteString("Приложение: parser1c\n")
+	sb.WriteString("\tПарсинг логов технологического журнала 1С\n\n")
 
-	sb.WriteString("Приложение: parser_tj_1c\n")
-	sb.WriteString("  Парсинг логов технологического журнала 1С\n\n")
-
-	sb.WriteString("Строка запуска: parser_tj_1c [Опции]\n\n")
+	sb.WriteString("Строка запуска: parser1c [Опции]\n\n")
 	sb.WriteString("Опции:\n")
 	sb.WriteString("-h --help - вызов справки\n")
 	sb.WriteString("-v --version - версия приложения\n")
 	sb.WriteString("--input - каталог с логами технологического журнала или имя файла с логами\n")
 	sb.WriteString("--format - формат вывода")
-	sb.WriteString("--countRuner - количество потоков парсера, по умолчанию 4, минимум 1")
+	sb.WriteString("--countRuner - количество потоков парсера, по умолчанию 1")
+	sb.WriteString("--output - выходной файл\n\n")
+
+	sb.WriteString("Пример запуска:\n")
+	sb.WriteString("./parser1c --input=./example/TJ/ --format=json --countRuner=4 --output=./log.json")
 
 	fmt.Println(sb.String())
 }
@@ -97,7 +98,5 @@ func (app *application) parse() {
 	}
 	countRuner, _ := strconv.Atoi(countRunerStr)
 	p := parser{Input: input, Output: output, Format: format, Debug: debug, CountRuner: countRuner}
-	p.initMapFieldName()
-	p.mapFieldNameMutex = sync.RWMutex{}
 	p.run()
 }

@@ -36,12 +36,13 @@ func (p *parser) searchFiles() error {
 }
 func (p *parser) run() error {
 
+	p.initMapFieldName()
 	err := p.searchFiles()
 	if err != nil {
 		return err
 	}
 
-	if p.CountRuner == 0 {
+	if p.CountRuner <= 0 {
 		p.CountRuner = 1
 	}
 	cntWorkers := p.CountRuner
@@ -61,20 +62,6 @@ func (p *parser) run() error {
 		os.Exit(1)
 	}
 	defer file.Close()
-	//file.WriteString("{\"events\":[\n")
-
-	/*var sep = ""
-	for a := 1; a <= len(p.Files); a++ {
-		events := <-results
-		for i, s := range events {
-			res1B, _ := json.Marshal(s)
-			file.WriteString(sep + string(res1B))
-			if i == 0 {
-				sep = ",\n"
-			}
-		}
-	}
-	file.WriteString("\n]}")*/
 
 	var sb strings.Builder
 	sb.WriteString("{\"events\":[\n")
@@ -88,7 +75,6 @@ func (p *parser) run() error {
 			if i != 0 {
 				sb.WriteString(",\n")
 			}
-			//res1B, _ := json.Marshal(s)
 			sb.WriteString(string(s.String()))
 		}
 	}
