@@ -1,6 +1,8 @@
 # Парсер 1С
 
 ![GitHub Release](https://img.shields.io/github/v/release/farukshin/parser1c)
+![GitHub build status](https://github.com/farukshin/parser1c/actions/workflows/parser1c.yml/badge.svg)
+
 
 Парсер логов технологического журнала 1С, в несколько потоков
 
