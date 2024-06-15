@@ -2,6 +2,7 @@
 
 ![GitHub Release](https://img.shields.io/github/v/release/farukshin/parser1c)
 ![GitHub build status](https://github.com/farukshin/parser1c/actions/workflows/parser1c.yml/badge.svg)
+![Codecov](https://img.shields.io/codecov/c/github/farukshin/parser1c)
 
 
 Парсер логов технологического журнала 1С, в несколько потоков
