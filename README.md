@@ -1,4 +1,7 @@
-# parser1c
+# Парсер 1С
+
+![GitHub Release](https://img.shields.io/github/v/release/farukshin/parser1c)
+
 Парсер логов технологического журнала 1С, в несколько потоков
 
 ## Установка
