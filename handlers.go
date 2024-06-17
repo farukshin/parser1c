@@ -33,7 +33,7 @@ func (app *application) help_home() {
 	fmt.Println(sb.String())
 }
 
-func (app *application) parseArgs() {
+func (app *application) parseArgs() error {
 
 	if len(os.Args) < 1 || isArgs("--help") || isArgs("-h") {
 		app.help_home()
@@ -42,6 +42,7 @@ func (app *application) parseArgs() {
 	} else {
 		app.parse()
 	}
+	return nil
 }
 
 func getArgs(a1 string) (string, error) {
