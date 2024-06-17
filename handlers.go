@@ -12,8 +12,7 @@ func (app *application) getVersion() {
 	fmt.Printf("parser1c %s\n", app.version)
 }
 
-func (app *application) help_home() {
-
+func helpHomeStr() string {
 	var sb strings.Builder
 	sb.WriteString("Приложение: parser1c\n")
 	sb.WriteString("\tПарсинг логов технологического журнала 1С\n\n")
@@ -29,8 +28,11 @@ func (app *application) help_home() {
 
 	sb.WriteString("Пример запуска:\n")
 	sb.WriteString("./parser1c --input=./example/TJ/ --format=json --countRuner=4 --output=./log.json")
+	return sb.String()
+}
 
-	fmt.Println(sb.String())
+func (app *application) help_home() {
+	fmt.Println(helpHomeStr())
 }
 
 func (app *application) parseArgs() error {
