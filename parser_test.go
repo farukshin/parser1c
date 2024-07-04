@@ -88,6 +88,37 @@ func TestGetTimeFromFileName_ng(t *testing.T) {
 	assert.NotEqual(t, expected, actual)
 }
 
+func TestGetTimeFromFileName_ng2(t *testing.T) {
+	p := parser{}
+	s := "1.log"
+	_, err := p.GetTimeFromFileName(s)
+	assert.NotNil(t, err)
+}
+
+func TestGetTimeFromFileName_ng3(t *testing.T) {
+	p := parser{}
+	_, err := p.GetTimeFromFileName("__051505.log")
+	assert.NotNil(t, err)
+}
+
+func TestGetTimeFromFileName_ng4(t *testing.T) {
+	p := parser{}
+	_, err := p.GetTimeFromFileName("24__1505.log")
+	assert.NotNil(t, err)
+}
+
+func TestGetTimeFromFileName_ng5(t *testing.T) {
+	p := parser{}
+	_, err := p.GetTimeFromFileName("2405__05.log")
+	assert.NotNil(t, err)
+}
+
+func TestGetTimeFromFileName_ng6(t *testing.T) {
+	p := parser{}
+	_, err := p.GetTimeFromFileName("240515__.log")
+	assert.NotNil(t, err)
+}
+
 func TestInitMapFieldName_ps(t *testing.T) {
 	p := parser{}
 	p.initMapFieldName()
@@ -135,7 +166,14 @@ func TestParseRun_ps(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-func TestParseSaerchFile_ps(t *testing.T) {
+func TestParseRun_ng(t *testing.T) {
+	p := parser{Input: "/tmp/116.log", Output: "./log.log", Format: "", Debug: "0", CountRuner: 4}
+	p.initMapFieldName()
+	err := p.run()
+	assert.NotNil(t, err)
+}
+
+func TestParseSearchFile_ps(t *testing.T) {
 
 	f, err := ioutil.TempFile("", "*.log")
 	assert.Nil(t, err)
@@ -148,6 +186,29 @@ func TestParseSaerchFile_ps(t *testing.T) {
 	p.initMapFieldName()
 	err = p.run()
 	assert.Nil(t, err)
+}
+
+func TestParseSearchFile_ng(t *testing.T) {
+
+	f, err := ioutil.TempFile("", "123.log")
+	assert.Nil(t, err)
+	for i := 0; i < 10; i++ {
+		f.WriteString("00:00.673002-0,CONN,1,process=ragent,OSThread=8776,Txt116=Clnt: MyUserName2:")
+	}
+	f.Close()
+
+	p := parser{Input: f.Name(), Output: "./log.log", Format: "", Debug: "0", CountRuner: 4}
+	p.initMapFieldName()
+	err = p.run()
+	assert.NotNil(t, err)
+}
+
+func TestParseSearchFile_ng2(t *testing.T) {
+
+	p := parser{Input: "/tmp/1232.log", Output: "./log.log", Format: "", Debug: "0", CountRuner: 4}
+	p.initMapFieldName()
+	err := p.run()
+	assert.NotNil(t, err)
 }
 
 func tmpEventDir() (string, error) {
