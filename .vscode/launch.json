@@ -12,7 +12,7 @@
         {
             "name": "Парсинг каталога",
             "type": "go",
-            "args": ["--input=./example/TJ/", "--format=json", "--output=./out.json"]
+            "args": ["--input=./example/TJ/", "--format=json", "--output=./out/out.json"]
         },
         {
             "name": "Version",

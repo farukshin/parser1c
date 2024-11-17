@@ -2,3 +2,4 @@ parser1c
 /example/*
 *.prof
 dist/
+out/
