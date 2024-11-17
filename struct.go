@@ -36,7 +36,7 @@ type parser struct {
 	MapFieldName      map[string]string `json:"mapFieldName"`
 	mapFieldNameMutex sync.RWMutex      `json:"mapFieldNameMutex"`
 	Files             []string          `json:"files"`
-	Events            []*Event          `json:"events"`
+	//db                DB                `json:"db"`
 }
 
 func (p *Properties) String() string {

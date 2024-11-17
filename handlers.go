@@ -22,12 +22,12 @@ func helpHomeStr() string {
 	sb.WriteString("-h --help - вызов справки\n")
 	sb.WriteString("-v --version - версия приложения\n")
 	sb.WriteString("--input - каталог с логами технологического журнала или имя файла с логами\n")
-	sb.WriteString("--format - формат вывода")
-	sb.WriteString("--countRuner - количество потоков парсера, по умолчанию 1")
+	sb.WriteString("--format - формат вывода\n")
+	sb.WriteString("--countRuner - количество потоков парсера, по умолчанию 1\n")
 	sb.WriteString("--output - выходной файл\n\n")
 
 	sb.WriteString("Пример запуска:\n")
-	sb.WriteString("./parser1c --input=./example/TJ/ --format=json --countRuner=4 --output=./log.json")
+	sb.WriteString("./parser1c --input=./example/ --format=json --countRuner=4 --output=./log.json")
 	return sb.String()
 }
 
