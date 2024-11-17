@@ -36,16 +36,15 @@ func (p *parser) searchFiles() error {
 }
 func (p *parser) run() error {
 
-	err := db.Init()
-	if err != nil {
-		panic(err)
+	if p.Format == "postgres" {
+		err := db.Init()
+		if err != nil {
+			panic(err)
+		}
 	}
 
-	// бесконечный цикл
-	//
-
 	p.initMapFieldName()
-	err = p.searchFiles()
+	err := p.searchFiles()
 	if err != nil {
 		return err
 	}
