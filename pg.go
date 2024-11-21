@@ -8,13 +8,13 @@ import (
 )
 
 type DataBase struct {
-	DB      *sql.DB   `json:"time"`
-	TjFiles []TjFiles `json:"tj_files"`
+	DB *sql.DB `json:"time"`
+	//TjFiles []TjFiles `json:"tj_files"`
 }
 
 type TjFiles struct {
 	Name string `json:"name"`
-	Size int    `json:"size"`
+	Size int64  `json:"size"`
 	Time string `json:"time"`
 }
 
@@ -60,19 +60,39 @@ func (dbs *DataBase) createTable() error {
 	return err
 }
 
-func loadTjFiles() error {
+func (dbs *DataBase) loadTjFilesStat() ([]TjFiles, error) {
+	rows, err := dbs.DB.Query("SELECT name, size, time FROM tj_files")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var tjFiles []TjFiles
+	for rows.Next() {
+		var tjFile TjFiles
+		err := rows.Scan(&tjFile.Name, &tjFile.Size, &tjFile.Time)
+		if err != nil {
+			return nil, err
+		}
+		tjFiles = append(tjFiles, tjFile)
+	}
+	return tjFiles, nil
+}
+
+func (dbs *DataBase) loadTjFiles() ([]TjFiles, error) {
+
+	curTjFiles := make([]TjFiles, 0)
 	rows, err := db.DB.Query("SELECT name, size, time FROM tj_files")
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer rows.Close()
 	for rows.Next() {
 		var tjFile TjFiles
 		err := rows.Scan(&tjFile.Name, &tjFile.Size, &tjFile.Time)
 		if err != nil {
-			return err
+			return nil, err
 		}
-		db.TjFiles = append(db.TjFiles, tjFile)
+		curTjFiles = append(curTjFiles, tjFile)
 	}
-	return nil
+	return curTjFiles, nil
 }

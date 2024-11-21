@@ -35,8 +35,20 @@ type parser struct {
 	CountRuner        int               `json:"countRuner"`
 	MapFieldName      map[string]string `json:"mapFieldName"`
 	mapFieldNameMutex sync.RWMutex      `json:"mapFieldNameMutex"`
-	Files             []string          `json:"files"`
-	//db                DB                `json:"db"`
+	FoundFiles        []string          `json:"files"`
+	MapFilesSeek      map[string]int64  `json:"mapFilesSeek"`
+}
+
+type JobInput struct {
+	FileName string
+	Seed     int64
+}
+
+type JobOutput struct {
+	FileName string
+	Seed     int64
+	SeedLast int64
+	Events   []*Event
 }
 
 func (p *Properties) String() string {

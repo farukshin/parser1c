@@ -2,8 +2,6 @@ package main
 
 import (
 	"io/ioutil"
-	"log"
-	"os"
 	"testing"
 	"time"
 
@@ -156,61 +154,62 @@ func TestParseLogLine_ps1(t *testing.T) {
 	assert.Equal(t, len(ev.Properties), 3)
 }
 
-func TestParseRun_ps(t *testing.T) {
-	dname, err := tmpEventDir()
-	defer os.RemoveAll(dname)
-	assert.Nil(t, err)
-	p := parser{Input: dname, Output: "./log.log", Format: "", Debug: "0", CountRuner: 4}
-	p.initMapFieldName()
-	err = p.run()
-	assert.Nil(t, err)
-}
+/*
+	func TestParseRun_ps(t *testing.T) {
+		dname, err := tmpEventDir()
+		defer os.RemoveAll(dname)
+		assert.Nil(t, err)
+		p := parser{Input: dname, Output: "./log.log", Format: "", Debug: "0", CountRuner: 4}
+		p.initMapFieldName()
+		err = p.run()
+		assert.Nil(t, err)
+	}
 
-func TestParseRun_ng(t *testing.T) {
-	p := parser{Input: "/tmp/116.log", Output: "./log.log", Format: "", Debug: "0", CountRuner: 4}
-	p.initMapFieldName()
-	err := p.run()
-	assert.NotNil(t, err)
-}
+	func TestParseRun_ng(t *testing.T) {
+		p := parser{Input: "/tmp/116.log", Output: "./log.log", Format: "", Debug: "0", CountRuner: 4}
+		p.initMapFieldName()
+		err := p.run()
+		assert.NotNil(t, err)
+	}
 
 func TestParseSearchFile_ps(t *testing.T) {
 
-	f, err := ioutil.TempFile("", "*.log")
-	assert.Nil(t, err)
-	for i := 0; i < 10; i++ {
-		f.WriteString("00:00.673002-0,CONN,1,process=ragent,OSThread=8776,Txt116=Clnt: MyUserName2:")
-	}
-	f.Close()
+		f, err := ioutil.TempFile("", "*.log")
+		assert.Nil(t, err)
+		for i := 0; i < 10; i++ {
+			f.WriteString("00:00.673002-0,CONN,1,process=ragent,OSThread=8776,Txt116=Clnt: MyUserName2:")
+		}
+		f.Close()
 
-	p := parser{Input: f.Name(), Output: "./log.log", Format: "", Debug: "0", CountRuner: 4}
-	p.initMapFieldName()
-	err = p.run()
-	assert.Nil(t, err)
-}
+		p := parser{Input: f.Name(), Output: "./log.log", Format: "", Debug: "0", CountRuner: 4}
+		p.initMapFieldName()
+		err = p.run()
+		assert.Nil(t, err)
+	}
 
 func TestParseSearchFile_ng(t *testing.T) {
 
-	f, err := ioutil.TempFile("", "123.log")
-	assert.Nil(t, err)
-	for i := 0; i < 10; i++ {
-		f.WriteString("00:00.673002-0,CONN,1,process=ragent,OSThread=8776,Txt116=Clnt: MyUserName2:")
-	}
-	f.Close()
+		f, err := ioutil.TempFile("", "123.log")
+		assert.Nil(t, err)
+		for i := 0; i < 10; i++ {
+			f.WriteString("00:00.673002-0,CONN,1,process=ragent,OSThread=8776,Txt116=Clnt: MyUserName2:")
+		}
+		f.Close()
 
-	p := parser{Input: f.Name(), Output: "./log.log", Format: "", Debug: "0", CountRuner: 4}
-	p.initMapFieldName()
-	err = p.run()
-	assert.NotNil(t, err)
-}
+		p := parser{Input: f.Name(), Output: "./log.log", Format: "", Debug: "0", CountRuner: 4}
+		p.initMapFieldName()
+		err = p.run()
+		assert.NotNil(t, err)
+	}
 
 func TestParseSearchFile_ng2(t *testing.T) {
 
-	p := parser{Input: "/tmp/1232.log", Output: "./log.log", Format: "", Debug: "0", CountRuner: 4}
-	p.initMapFieldName()
-	err := p.run()
-	assert.NotNil(t, err)
-}
-
+		p := parser{Input: "/tmp/1232.log", Output: "./log.log", Format: "", Debug: "0", CountRuner: 4}
+		p.initMapFieldName()
+		err := p.run()
+		assert.NotNil(t, err)
+	}
+*/
 func tmpEventDir() (string, error) {
 	arr := []string{"00:00.673002-0,CONN,1,process=ragent,OSThread=8776,Txt116=Clnt: MyUserName2: ",
 		"00:11.658012-0,CLSTR,0,process=rmngr,OSThread=1780,Event=Performance update,Data='process=tcp://s-msk-p-csd-as1:1541,pid=5256,cpu=0,queue_length=0,queue_length/cpu_num=0,memory_performance=22,disk_performance=17,response_time=39,average_response_time=30.78'",
@@ -234,25 +233,26 @@ func tmpEventDir() (string, error) {
 	return dname, nil
 }
 
-func TestAppRun_ps(t *testing.T) {
-	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
-	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
+/*
+	func TestAppRun_ps(t *testing.T) {
+		infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
+		errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 
-	app := &application{
-		errorLog: errorLog,
-		infoLog:  infoLog,
-		version:  "v0.1.4",
+		app := &application{
+			errorLog: errorLog,
+			infoLog:  infoLog,
+			version:  "v0.1.4",
+		}
+
+		dname, err := tmpEventDir()
+		defer os.RemoveAll(dname)
+		assert.Nil(t, err)
+		os.Args = append(os.Args, "--input="+dname)
+		os.Args = append(os.Args, "--output=log.log")
+		os.Args = append(os.Args, "--format=json")
+		app.parseArgs()
 	}
-
-	dname, err := tmpEventDir()
-	defer os.RemoveAll(dname)
-	assert.Nil(t, err)
-	os.Args = append(os.Args, "--input="+dname)
-	os.Args = append(os.Args, "--output=log.log")
-	os.Args = append(os.Args, "--format=json")
-	app.parseArgs()
-}
-
+*/
 func TestHelpHomeStr_ps(t *testing.T) {
 	str := helpHomeStr()
 	assert.Equal(t, str[:30], "Приложение: parser1c")

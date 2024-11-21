@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -11,9 +10,9 @@ import (
 	"time"
 )
 
-func (p *parser) worker(id int, jobs <-chan string, results chan<- []*Event) {
+func (p *parser) worker(id int, jobs <-chan JobInput, results chan<- JobOutput) {
 	for j := range jobs {
-		events := p.checkFiles(j, 0)
+		events := p.checkFiles(j.FileName, j.Seed)
 		results <- events
 	}
 }
@@ -27,7 +26,7 @@ func (p *parser) searchFiles() error {
 	if f.IsDir() {
 		p.ListDir(p.Input)
 	} else if len(p.Input) >= 4 && p.Input[len(p.Input)-4:] == ".log" {
-		p.Files = append(p.Files, p.Input)
+		p.FoundFiles = append(p.FoundFiles, p.Input)
 	} else {
 		return errors.New("Не удалось прочитать из input = " + p.Input)
 	}
@@ -48,20 +47,35 @@ func (p *parser) run() error {
 	if err != nil {
 		return err
 	}
+	p.loadMapFilesSeek()
 
 	if p.CountRuner <= 0 {
 		p.CountRuner = 1
 	}
 	cntWorkers := p.CountRuner
-	jobs := make(chan string, len(p.Files))
-	results := make(chan []*Event, len(p.Files))
+	jobs := make(chan JobInput, 1000) //todo
+	results := make(chan JobOutput, 1000)
 	for w := 1; w <= cntWorkers; w++ {
 		go p.worker(w, jobs, results)
 	}
-	for _, file := range p.Files {
-		jobs <- file
+
+	for true {
+		// закидываем все файлы в очередь
+		for file, pos := range p.MapFilesSeek {
+			jobs <- JobInput{FileName: file, Seed: pos}
+			p.MapFilesSeek[file] = 0
+			break
+		}
+
+		// обрабатываем очередь из результатов
+
+		// запускаем поиск новых файлов
+
+		// обновляем seek в структуре - обновляем данные в БД (запрос в pg)
+
 	}
-	close(jobs)
+
+	/*close(jobs)
 
 	file, err := os.Create(p.Output)
 	if err != nil {
@@ -87,7 +101,27 @@ func (p *parser) run() error {
 	}
 	sb.WriteString("]}")
 	file.WriteString(sb.String())
+	*/
 	return nil
+}
+
+func (p *parser) loadMapFilesSeek() {
+	p.MapFilesSeek = make(map[string]int64)
+
+	var curMapFilesSeek = make(map[string]int64)
+	TjFiles, err := db.loadTjFiles()
+	if err != nil {
+		panic(err)
+	}
+	for _, file := range TjFiles {
+		curMapFilesSeek[file.Name] = file.Size
+	}
+
+	for _, file := range p.FoundFiles {
+		if _, ok := curMapFilesSeek[file]; ok {
+			p.MapFilesSeek[file] = curMapFilesSeek[file]
+		}
+	}
 }
 
 func (p *parser) initMapFieldName() {
@@ -109,20 +143,24 @@ func (p *parser) ListDir(path string) {
 		if val.IsDir() {
 			p.ListDir(path + val.Name())
 		} else if len(name) > 4 && name[len(name)-4:] == ".log" {
-			p.Files = append(p.Files, path+name)
+			p.FoundFiles = append(p.FoundFiles, path+name)
 		}
 	}
 
 }
 
-func (p *parser) checkFiles(fileName string, pos int) []*Event {
+func (p *parser) checkFiles(fileName string, pos int64) JobOutput {
 
-	eventsString, _, _ := parseFile(fileName, pos)
+	res := JobOutput{}
+	eventsString, newpos, _ := parseFile(fileName, pos)
 	time, _ := p.GetTimeFromFileName(fileName)
 	events, _ := p.getEvetsFromString(eventsString, time)
 
-	return events
+	res.FileName = fileName
+	res.Seed = newpos
+	res.Events = events
 
+	return res
 }
 
 func (p *parser) GetTimeFromFileName(fileName string) (time.Time, error) {
@@ -281,7 +319,7 @@ func (p *parser) getEvetsFromString(events []string, time time.Time) ([]*Event, 
 	return res, nil
 }
 
-func parseFile(fileName string, offset int) ([]string, uint64, error) {
+func parseFile(fileName string, offset int64) ([]string, int64, error) {
 
 	const portion = 1024
 
@@ -314,7 +352,7 @@ func parseFile(fileName string, offset int) ([]string, uint64, error) {
 		res = append(res, ost)
 	}
 	pos, err = f.Seek(0, io.SeekCurrent)
-	return res, uint64(pos), nil
+	return res, pos, nil
 }
 
 func ostUpdate(cur string) ([]string, string) {

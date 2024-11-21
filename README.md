@@ -1,10 +1,10 @@
 # Парсер 1С
 
-![GitHub Release](https://img.shields.io/github/v/release/farukshin/parser1c)
+[![GitHub Release](https://img.shields.io/github/v/release/farukshin/parser1c)](https://github.com/farukshin/parser1c/releases)
 ![GitHub build status](https://github.com/farukshin/parser1c/actions/workflows/parser1c.yml/badge.svg)
 ![Codecov](https://img.shields.io/codecov/c/github/farukshin/parser1c)
 ![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/farukshin/parser1c/total?color=green)
-![GitHub License](https://img.shields.io/github/license/farukshin/parser1c)
+[![GitHub License](https://img.shields.io/github/license/farukshin/parser1c)](https://github.com/farukshin/parser1c/blob/main/LICENSE.md)
 
 
 Многопоточный парсер логов технологического журнала 1С.
