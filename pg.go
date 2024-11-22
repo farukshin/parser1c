@@ -54,7 +54,76 @@ func (dbs *DataBase) createTable() error {
 	if err != nil {
 		return err
 	}
-	_, err = dbs.DB.Exec(`CREATE TABLE IF NOT EXISTS events (time TIMESTAMP, duration INT, name VARCHAR(255), level VARCHAR(255), log TEXT)`)
+	_, err = dbs.DB.Exec(`CREATE TABLE IF NOT EXISTS events (time TIMESTAMP, 
+		duration INT, 
+		name VARCHAR(255), 
+		eventlevel INT,
+		log TEXT,
+		ConnectString TEXT,
+		ServiceName TEXT,
+		res TEXT,
+		OSThread TEXT,
+		ExtData TEXT,
+		SESN1process TEXT,
+		ClientID TEXT,
+		Err TEXT,
+		Appl TEXT,
+		DstId TEXT,
+		pprocessName TEXT,
+		DataBase TEXT,
+		Url TEXT,
+		Event TEXT,
+		SrcId TEXT,
+		ID TEXT,
+		Info TEXT,
+		process TEXT,
+		ATTN0process TEXT,
+		tclientID INT,
+		IB TEXT,
+		TargetCall TEXT,
+		DBMS TEXT,
+		Context TEXT,
+		SrcName TEXT,
+		tapplicationName TEXT,
+		ApplicationExt TEXT,
+		Data TEXT,
+		Protected TEXT,
+		ProcessId TEXT,
+		tcomputerName TEXT,
+		DstAddr TEXT,
+		SessionID TEXT,
+		AgentUrl TEXT,
+		CONN0process TEXT,
+		ClientComputerName TEXT,
+		DstPid TEXT,
+		DistribData TEXT,
+		RmngrURL TEXT,
+		CONN2process TEXT,
+		CallID TEXT,
+		Result TEXT,
+		Request TEXT,
+		Pid TEXT,
+		InfoBase TEXT,
+		Message TEXT,
+		ServerComputerName TEXT,
+		tconnectID INT,
+		Usr TEXT,
+		CONN1process TEXT,
+		Administrator TEXT,
+		SrcAddr TEXT,
+		MName TEXT,
+		EXCP0process TEXT,
+		Ref TEXT,
+		Nmb TEXT,
+		UserName TEXT,
+		Func TEXT,
+		SrcPid TEXT,
+		Calls TEXT,
+		Txt TEXT,
+		Descr TEXT,
+		Exception TEXT,
+		Level TEXT,
+		SDBL TEXT)`)
 	if err != nil {
 		return err
 	}
@@ -109,12 +178,18 @@ func (dbs *DataBase) loadTjFiles() ([]TjFiles, error) {
 }
 
 func (dbs *DataBase) saveEvents(fileName string, events []*Event) error {
-	for _, e := range events {
-		_, err := dbs.DB.Exec("INSERT INTO events (time, duration, name, level, log) VALUES ($1, $2, $3, $4, $5)",
-			e.Time, e.Duration, e.Name, e.Level, e.Log)
+	tx, err := dbs.DB.Begin()
+	if err != nil {
+		return err
+	}
+	for _, event := range events {
+		_, err = tx.Exec(`INSERT INTO events (time, duration, name, eventlevel, log, ConnectString, ServiceName, res, OSThread, ExtData, SESN1process, ClientID, Err, Appl, DstId, pprocessName, DataBase, Url, Event, SrcId, ID, Info, process, ATTN0process, tclientID, IB, TargetCall, DBMS, Context, SrcName, tapplicationName, ApplicationExt, Data, Protected, ProcessId, tcomputerName, DstAddr, SessionID, AgentUrl, CONN0process, ClientComputerName, DstPid, DistribData, RmngrURL, CONN2process, CallID, Result, Request, Pid, InfoBase, Message, ServerComputerName, tconnectID, Usr, CONN1process, Administrator, SrcAddr, MName, EXCP0process, Ref, Nmb, UserName, Func, SrcPid, Calls, Txt, Descr, Exception, Level, SDBL) 
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36, $37, $38, $39, $40, $41, $42, $43, $44, $45, $46, $47, $48, $49, $50, $51, $52, $53, $54, $55, $56, $57, $58, $59, $60, $61, $62, $63, $64, $65, $66, $67, $68, $69, $70)`,
+			event.Time, event.Duration, event.Name, event.EventLevel, event.Log, event.ConnectString, event.ServiceName, event.res, event.OSThread, event.ExtData, event.SESN1process, event.ClientID, event.Err, event.Appl, event.DstId, event.pprocessName, event.DataBase, event.Url, event.Event, event.SrcId, event.ID, event.Info, event.process, event.ATTN0process, event.tclientID, event.IB, event.TargetCall, event.DBMS, event.Context, event.SrcName, event.tapplicationName, event.ApplicationExt, event.Data, event.Protected, event.ProcessId, event.tcomputerName, event.DstAddr, event.SessionID, event.AgentUrl, event.CONN0process, event.ClientComputerName, event.DstPid, event.DistribData, event.RmngrURL, event.CONN2process, event.CallID, event.Result, event.Request, event.Pid, event.InfoBase, event.Message, event.ServerComputerName, event.tconnectID, event.Usr, event.CONN1process, event.Administrator, event.SrcAddr, event.MName, event.EXCP0process, event.Ref, event.Nmb, event.UserName, event.Func, event.SrcPid, event.Calls, event.Txt, event.Descr, event.Exception, event.Level, event.SDBL)
 		if err != nil {
-			return err
+			tx.Rollback()
 		}
 	}
-	return nil
+	tx.Commit()
+	return err
 }

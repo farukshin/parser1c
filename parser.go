@@ -249,7 +249,13 @@ func (p *parser) parseLogLine(log string, timebase time.Time) (*Event, error) {
 		ev.Log = log
 	}
 	ev.Name = log[firstComma+1 : secondComma]
-	ev.Level = log[secondComma+1 : comma3]
+
+	eventlevel, err2 := getIntFromString(log[secondComma+1 : comma3])
+	if err2 != nil {
+		return nil, errors.New("Не удалось распарсить лог '" + log + "'")
+	}
+	ev.EventLevel = eventlevel
+
 	duration, err := getUint64FromString(log[tire1+1 : firstComma])
 	if err != nil {
 		return nil, errors.New("Не удалось распарсить лог '" + log + "'")
@@ -264,7 +270,8 @@ func (p *parser) parseLogLine(log string, timebase time.Time) (*Event, error) {
 	for _, pr := range prop {
 		properties, success := p.checkProperties(ost + pr)
 		if success {
-			ev.Properties = append(ev.Properties, properties)
+			//ev.Properties = append(ev.Properties, properties)
+			ev.setProrerites(properties)
 			ost = ""
 		} else {
 			ost = ost + pr
@@ -306,6 +313,19 @@ func getUint64FromString(str string) (uint64, error) {
 				return 0, errors.New("Некорректная строка")
 			}
 			res = res*10 + uint64(ch-'0')
+		}
+	}
+	return res, nil
+}
+
+func getIntFromString(str string) (int, error) {
+	var res int = 0
+	if len(str) > 0 {
+		for _, ch := range str {
+			if !(ch >= '0' && ch <= '9') {
+				return 0, errors.New("Некорректная строка")
+			}
+			res = res*10 + int(ch-'0')
 		}
 	}
 	return res, nil

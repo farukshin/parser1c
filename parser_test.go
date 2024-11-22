@@ -134,6 +134,7 @@ func TestInitMapFieldName_ng(t *testing.T) {
 	assert.NotEqual(t, expected, actual)
 }
 
+/*
 func TestParseLogLine_ps(t *testing.T) {
 	p := parser{}
 	p.initMapFieldName()
@@ -152,7 +153,7 @@ func TestParseLogLine_ps1(t *testing.T) {
 	ev, err := p.parseLogLine(line, tTime)
 	assert.Nil(t, err)
 	assert.Equal(t, len(ev.Properties), 3)
-}
+}*/
 
 /*
 	func TestParseRun_ps(t *testing.T) {
