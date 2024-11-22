@@ -12,25 +12,30 @@ import (
 
 func (p *parser) worker(id int, jobs <-chan JobInput, results chan<- JobOutput) {
 	for j := range jobs {
-		events := p.checkFiles(j.FileName, j.Seed)
-		results <- events
+		out := p.checkFiles(j.FileName, j.Offset)
+		results <- out
 	}
 }
 
-func (p *parser) searchFiles() error {
+func (p *parser) searchFiles() ([]string, error) {
+
+	foundFiles := make([]string, 0)
 
 	f, err := os.Stat(p.Input)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if f.IsDir() {
-		p.ListDir(p.Input)
+		res := p.ListDir(p.Input)
+		for _, file := range res {
+			foundFiles = append(foundFiles, file)
+		}
 	} else if len(p.Input) >= 4 && p.Input[len(p.Input)-4:] == ".log" {
-		p.FoundFiles = append(p.FoundFiles, p.Input)
+		foundFiles = append(foundFiles, p.Input)
 	} else {
-		return errors.New("Не удалось прочитать из input = " + p.Input)
+		return nil, errors.New("Не удалось прочитать из input = " + p.Input)
 	}
-	return nil
+	return foundFiles, nil
 
 }
 func (p *parser) run() error {
@@ -43,11 +48,11 @@ func (p *parser) run() error {
 	}
 
 	p.initMapFieldName()
-	err := p.searchFiles()
+	foundFiles, err := p.searchFiles()
 	if err != nil {
 		return err
 	}
-	p.loadMapFilesSeek()
+	p.loadMapFilesSeek(foundFiles)
 
 	if p.CountRuner <= 0 {
 		p.CountRuner = 1
@@ -58,55 +63,47 @@ func (p *parser) run() error {
 	for w := 1; w <= cntWorkers; w++ {
 		go p.worker(w, jobs, results)
 	}
+	for filename, offset := range p.MapFilesOffset {
+		jobs <- JobInput{FileName: filename, Offset: offset}
+	}
 
+	var cnt = 0
 	for true {
-		// закидываем все файлы в очередь
-		for file, pos := range p.MapFilesSeek {
-			jobs <- JobInput{FileName: file, Seed: pos}
-			p.MapFilesSeek[file] = 0
-			break
+		cnt++
+		out := <-results
+		if out.Offset != out.OffsetLast {
+			db.updateTjFiles(out.FileName, out.Offset)
+			p.MapFilesOffset[out.FileName] = out.Offset
 		}
-
-		// обрабатываем очередь из результатов
-
-		// запускаем поиск новых файлов
-
-		// обновляем seek в структуре - обновляем данные в БД (запрос в pg)
-
-	}
-
-	/*close(jobs)
-
-	file, err := os.Create(p.Output)
-	if err != nil {
-		fmt.Println("Unable to create file:", err)
-		os.Exit(1)
-	}
-	defer file.Close()
-
-	var sb strings.Builder
-	sb.WriteString("{\"events\":[\n")
-
-	for a := 1; a <= len(p.Files); a++ {
-		events := <-results
-		for i, s := range events {
-			if s == nil {
-				continue
+		if out.Events != nil && len(out.Events) > 0 {
+			if p.Format == "postgres" {
+				err := db.saveEvents(out.FileName, out.Events)
+				if err != nil {
+					return err
+				}
 			}
-			if i != 0 {
-				sb.WriteString(",\n")
-			}
-			sb.WriteString(string(s.String()))
 		}
+		jobs <- JobInput{FileName: out.FileName, Offset: out.Offset}
+
+		if cnt == 10 {
+			cnt = 0
+			foundFiles, err := p.searchFiles()
+			if err == nil {
+				for _, file := range foundFiles {
+					if _, ok := p.MapFilesOffset[file]; !ok {
+						jobs <- JobInput{FileName: file, Offset: 0}
+						p.MapFilesOffset[file] = 0
+					}
+				}
+			}
+		}
+		time.Sleep(1 * time.Second)
 	}
-	sb.WriteString("]}")
-	file.WriteString(sb.String())
-	*/
 	return nil
 }
 
-func (p *parser) loadMapFilesSeek() {
-	p.MapFilesSeek = make(map[string]int64)
+func (p *parser) loadMapFilesSeek(foundFiles []string) {
+	p.MapFilesOffset = make(map[string]int64)
 
 	var curMapFilesSeek = make(map[string]int64)
 	TjFiles, err := db.loadTjFiles()
@@ -117,36 +114,43 @@ func (p *parser) loadMapFilesSeek() {
 		curMapFilesSeek[file.Name] = file.Size
 	}
 
-	for _, file := range p.FoundFiles {
-		if _, ok := curMapFilesSeek[file]; ok {
-			p.MapFilesSeek[file] = curMapFilesSeek[file]
+	for _, file := range foundFiles {
+		if _, ok := curMapFilesSeek[file]; !ok {
+			p.MapFilesOffset[file] = 0
+			db.addTjFiles(file, 0)
+		} else {
+			p.MapFilesOffset[file] = curMapFilesSeek[file]
 		}
 	}
 }
 
 func (p *parser) initMapFieldName() {
-	p.MapFieldName = map[string]string{"ConnectString": "connectstring", "ServiceName": "servicename", "res": "res", "OSThread": "osthread", "ExtData": "extdata", "SESN1process": "sesnQprocess", "ClientID": "clientid", "Err": "err", "Appl": "appl", "DstId": "dstid", "p:processName": "pprocessname", "DataBase": "database", "Url": "url", "Event": "event", "SrcId": "srcid", "ID": "id", "Info": "info", "process": "process", "ATTN0process": "attnPprocess", "t:clientID": "tclientid", "IB": "ib", "TargetCall": "targetcall", "DBMS": "dbms", "Context": "context", "SrcName": "srcname", "t:applicationName": "tapplicationname", "ApplicationExt": "applicationext", "Data": "data", "Protected": "protected", "ProcessId": "processid", "t:computerName": "tcomputername", "DstAddr": "dstaddr", "SessionID": "sessionid", "txt": "txt", "AgentUrl": "agenturl", "CONN0process": "connPprocess", "ClientComputerName": "clientcomputername", "DstPid": "dstpid", "DistribData": "distribdata", "RmngrURL": "rmngrurl", "CONN2process": "connRprocess", "CallID": "callid", "Result": "result", "Request": "request", "Pid": "pid", "InfoBase": "infobase", "Message": "message", "ServerComputerName": "servercomputername", "t:connectID": "tconnectid", "Usr": "usr", "CONN1process": "connQprocess", "Administrator": "administrator", "SrcAddr": "srcaddr", "MName": "mname", "EXCP0process": "excpPprocess", "Ref": "ref", "Nmb": "nmb", "UserName": "username", "Func": "func", "SrcPid": "srcpid", "Calls": "calls", "Txt": "txt", "Descr": "descr", "Exception": "exception"}
+	p.MapFieldName = map[string]string{"ConnectString": "connectstring", "ServiceName": "servicename", "res": "res", "OSThread": "osthread", "ExtData": "extdata", "SESN1process": "sesn1process", "ClientID": "clientid", "Err": "err", "Appl": "appl", "DstId": "dstid", "p:processName": "pprocessname", "DataBase": "database", "Url": "url", "Event": "event", "SrcId": "srcid", "ID": "id", "Info": "info", "process": "process", "ATTN0process": "attn0process", "t:clientID": "tclientid", "IB": "ib", "TargetCall": "targetcall", "DBMS": "dbms", "Context": "context", "SrcName": "srcname", "t:applicationName": "tapplicationname", "ApplicationExt": "applicationext", "Data": "data", "Protected": "protected", "ProcessId": "processid", "t:computerName": "tcomputername", "DstAddr": "dstaddr", "SessionID": "sessionid", "txt": "txt", "AgentUrl": "agenturl", "CONN0process": "conn0process", "ClientComputerName": "clientcomputername", "DstPid": "dstpid", "DistribData": "distribdata", "RmngrURL": "rmngrurl", "CONN2process": "conn2process", "CallID": "callid", "Result": "result", "Request": "request", "Pid": "pid", "InfoBase": "infobase", "Message": "message", "ServerComputerName": "servercomputername", "t:connectID": "tconnectid", "Usr": "usr", "CONN1process": "conn1process", "Administrator": "administrator", "SrcAddr": "srcaddr", "MName": "mname", "EXCP0process": "excp0process", "Ref": "ref", "Nmb": "nmb", "UserName": "username", "Func": "func", "SrcPid": "srcpid", "Calls": "calls", "Txt": "txt", "Descr": "descr", "Exception": "exception"}
 }
 
-func (p *parser) ListDir(path string) {
+func (p *parser) ListDir(path string) []string {
 
+	res := make([]string, 0)
 	if len(path) > 0 && path[len(path)-1] != '/' {
 		path = path + "/"
 	}
 
 	lst, err := ioutil.ReadDir(path)
 	if err != nil {
-		return
+		return make([]string, 0)
 	}
 	for _, val := range lst {
 		name := val.Name()
 		if val.IsDir() {
-			p.ListDir(path + val.Name())
+			cur := p.ListDir(path + val.Name())
+			for _, file := range cur {
+				res = append(res, file)
+			}
 		} else if len(name) > 4 && name[len(name)-4:] == ".log" {
-			p.FoundFiles = append(p.FoundFiles, path+name)
+			res = append(res, path+name)
 		}
 	}
-
+	return res
 }
 
 func (p *parser) checkFiles(fileName string, pos int64) JobOutput {
@@ -157,7 +161,8 @@ func (p *parser) checkFiles(fileName string, pos int64) JobOutput {
 	events, _ := p.getEvetsFromString(eventsString, time)
 
 	res.FileName = fileName
-	res.Seed = newpos
+	res.Offset = newpos
+	res.OffsetLast = pos
 	res.Events = events
 
 	return res
@@ -243,8 +248,8 @@ func (p *parser) parseLogLine(log string, timebase time.Time) (*Event, error) {
 	if p.Debug == "1" || p.Debug == "true" {
 		ev.Log = log
 	}
-	ev.EventName = log[firstComma+1 : secondComma]
-	ev.EventLevel = log[secondComma+1 : comma3]
+	ev.Name = log[firstComma+1 : secondComma]
+	ev.Level = log[secondComma+1 : comma3]
 	duration, err := getUint64FromString(log[tire1+1 : firstComma])
 	if err != nil {
 		return nil, errors.New("Не удалось распарсить лог '" + log + "'")

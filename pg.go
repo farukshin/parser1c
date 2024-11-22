@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"time"
 
 	_ "github.com/lib/pq"
 )
@@ -53,7 +54,7 @@ func (dbs *DataBase) createTable() error {
 	if err != nil {
 		return err
 	}
-	_, err = dbs.DB.Exec(`CREATE TABLE IF NOT EXISTS events (id SERIAL PRIMARY KEY, time TIMESTAMP, duration INT, event_name VARCHAR(255), event_level VARCHAR(255), log TEXT)`)
+	_, err = dbs.DB.Exec(`CREATE TABLE IF NOT EXISTS events (time TIMESTAMP, duration INT, name VARCHAR(255), level VARCHAR(255), log TEXT)`)
 	if err != nil {
 		return err
 	}
@@ -78,6 +79,16 @@ func (dbs *DataBase) loadTjFilesStat() ([]TjFiles, error) {
 	return tjFiles, nil
 }
 
+func (dbs *DataBase) updateTjFiles(fileName string, seed int64) error {
+	_, err := dbs.DB.Exec("UPDATE tj_files SET size = $1, time = $3 WHERE name = $2", seed, fileName, time.Now())
+	return err
+}
+
+func (dbs *DataBase) addTjFiles(fileName string, seed int64) error {
+	_, err := dbs.DB.Exec("INSERT INTO tj_files (name, size, time) VALUES ($1, $2, $3)", fileName, seed, time.Now())
+	return err
+}
+
 func (dbs *DataBase) loadTjFiles() ([]TjFiles, error) {
 
 	curTjFiles := make([]TjFiles, 0)
@@ -95,4 +106,15 @@ func (dbs *DataBase) loadTjFiles() ([]TjFiles, error) {
 		curTjFiles = append(curTjFiles, tjFile)
 	}
 	return curTjFiles, nil
+}
+
+func (dbs *DataBase) saveEvents(fileName string, events []*Event) error {
+	for _, e := range events {
+		_, err := dbs.DB.Exec("INSERT INTO events (time, duration, name, level, log) VALUES ($1, $2, $3, $4, $5)",
+			e.Time, e.Duration, e.Name, e.Level, e.Log)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

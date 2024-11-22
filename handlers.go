@@ -83,16 +83,17 @@ func isArgsAll(ar string) bool {
 
 func (app *application) parse() {
 
-	if !isArgsAll("--input,--format,--output") {
+	if !isArgsAll("--input,--format") {
 		app.help_home()
 		return
 	}
 	input, erri := getArgs("--input")
-	output, erro := getArgs("--output")
+	//output, erro := getArgs("--output")
 	format, errf := getArgs("--format")
 	debug, _ := getArgs("--debug")
 	countRunerStr, _ := getArgs("--countRuner")
-	if input == "" || erri != nil || errf != nil || erro != nil {
+	//if input == "" || erri != nil || errf != nil || erro != nil {
+	if input == "" || erri != nil || errf != nil {
 		app.help_home()
 		return
 	}
@@ -100,6 +101,6 @@ func (app *application) parse() {
 		format = "json"
 	}
 	countRuner, _ := strconv.Atoi(countRunerStr)
-	p := parser{Input: input, Output: output, Format: format, Debug: debug, CountRuner: countRuner}
+	p := parser{Input: input, Output: "", Format: format, Debug: debug, CountRuner: countRuner}
 	p.run()
 }

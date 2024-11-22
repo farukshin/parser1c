@@ -15,6 +15,11 @@
             "args": ["--input=./example/TJ/", "--format=json", "--output=./out/out.json"]
         },
         {
+            "name": "Парсинг каталога отправка в postgres",
+            "type": "go",
+            "args": ["--input=./example/TJ/", "--format=postgres"]
+        },
+        {
             "name": "Version",
             "type": "go",
             "args": ["--version"]
