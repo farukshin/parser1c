@@ -123,7 +123,41 @@ func (dbs *DataBase) createTable() error {
 		Descr TEXT,
 		Exception TEXT,
 		Level TEXT,
-		SDBL TEXT)`)
+		SDBL TEXT,
+		appid TEXT,
+		trans INT,
+		rows INT,
+		dstclientid INT,
+		interface TEXT,
+		iname  TEXT,
+		method INT,
+		memory INT,
+		memorypeak INT,
+		inbytes INT,
+		outbytes INT,
+		cputime INT,
+		waitconnections INT,
+		dbpid INT,
+		rowsaffected INT,
+		body INT,
+		status INT,
+		callwait INT,
+		regions TEXT,
+		locks TEXT,
+		sql TEXT,
+		uri TEXT,
+		headers TEXT,
+		phrase TEXT,
+		first TEXT,
+		ablename TEXT,
+		prm TEXT,
+		processname TEXT,
+		srcprocessname TEXT,
+		tablename TEXT,
+		callQlevel TEXT,
+		retexcp TEXT,
+		scallPlevel TEXT
+		)`)
 	if err != nil {
 		return err
 	}
@@ -183,9 +217,23 @@ func (dbs *DataBase) saveEvents(fileName string, events []*Event) error {
 		return err
 	}
 	for _, event := range events {
-		_, err = tx.Exec(`INSERT INTO events (time, duration, name, eventlevel, log, ConnectString, ServiceName, res, OSThread, ExtData, SESN1process, ClientID, Err, Appl, DstId, pprocessName, DataBase, Url, Event, SrcId, ID, Info, process, ATTN0process, tclientID, IB, TargetCall, DBMS, Context, SrcName, tapplicationName, ApplicationExt, Data, Protected, ProcessId, tcomputerName, DstAddr, SessionID, AgentUrl, CONN0process, ClientComputerName, DstPid, DistribData, RmngrURL, CONN2process, CallID, Result, Request, Pid, InfoBase, Message, ServerComputerName, tconnectID, Usr, CONN1process, Administrator, SrcAddr, MName, EXCP0process, Ref, Nmb, UserName, Func, SrcPid, Calls, Txt, Descr, Exception, Level, SDBL) 
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36, $37, $38, $39, $40, $41, $42, $43, $44, $45, $46, $47, $48, $49, $50, $51, $52, $53, $54, $55, $56, $57, $58, $59, $60, $61, $62, $63, $64, $65, $66, $67, $68, $69, $70)`,
-			event.Time, event.Duration, event.Name, event.EventLevel, event.Log, event.ConnectString, event.ServiceName, event.res, event.OSThread, event.ExtData, event.SESN1process, event.ClientID, event.Err, event.Appl, event.DstId, event.pprocessName, event.DataBase, event.Url, event.Event, event.SrcId, event.ID, event.Info, event.process, event.ATTN0process, event.tclientID, event.IB, event.TargetCall, event.DBMS, event.Context, event.SrcName, event.tapplicationName, event.ApplicationExt, event.Data, event.Protected, event.ProcessId, event.tcomputerName, event.DstAddr, event.SessionID, event.AgentUrl, event.CONN0process, event.ClientComputerName, event.DstPid, event.DistribData, event.RmngrURL, event.CONN2process, event.CallID, event.Result, event.Request, event.Pid, event.InfoBase, event.Message, event.ServerComputerName, event.tconnectID, event.Usr, event.CONN1process, event.Administrator, event.SrcAddr, event.MName, event.EXCP0process, event.Ref, event.Nmb, event.UserName, event.Func, event.SrcPid, event.Calls, event.Txt, event.Descr, event.Exception, event.Level, event.SDBL)
+		_, err = tx.Exec(`INSERT INTO events (time, duration, name, eventlevel, log, ConnectString, ServiceName, res, OSThread, ExtData, SESN1process, ClientID, Err, Appl, DstId, pprocessName, DataBase, Url, Event, SrcId, ID, Info, process, ATTN0process, tclientID, IB, TargetCall, DBMS, Context, SrcName, tapplicationName, ApplicationExt, Data, Protected, ProcessId, tcomputerName, DstAddr, SessionID, AgentUrl, CONN0process, ClientComputerName, DstPid, DistribData, RmngrURL, CONN2process, CallID, Result, Request, Pid, InfoBase, Message, ServerComputerName, tconnectID, Usr, CONN1process, Administrator, SrcAddr, MName, EXCP0process, Ref, Nmb, UserName, Func, SrcPid, Calls, Txt, Descr, Exception, Level, SDBL, 
+				appid, trans, rows, dstclientid, interface, iname, method,
+				memory, memorypeak, inbytes, outbytes, cputime, waitconnections, dbpid, rowsaffected, body, status, 
+				callwait, regions, locks, sql, uri, headers, phrase, first, ablename, prm, processname, srcprocessname, 
+				tablename, callQlevel, retexcp, scallPlevel
+				) 
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36, $37, $38, $39, $40, $41, $42, $43, $44, $45, $46, $47, $48, $49, $50, $51, $52, $53, $54, $55, $56, $57, $58, $59, $60, $61, $62, $63, $64, $65, $66, $67, $68, $69, $70, $71, 
+			$72,$73,$74,$75,$76,$77,
+			$78,$79,$80,$81,$82,$83,$84,$85,$86,$87,$88,$89,$90,$91,$92,$93,$94,$95,$96,$97,$98,$99,
+			$100,$101,$102,$103)`,
+			event.Time, event.Duration, event.Name, event.EventLevel, event.Log, event.ConnectString, event.ServiceName, event.res, event.OSThread, event.ExtData, event.SESN1process, event.ClientID, event.Err, event.Appl, event.DstId, event.pprocessName, event.DataBase, event.Url, event.Event, event.SrcId, event.ID, event.Info, event.process, event.ATTN0process, event.tclientID, event.IB, event.TargetCall, event.DBMS, event.Context, event.SrcName, event.tapplicationName, event.ApplicationExt, event.Data, event.Protected, event.ProcessId, event.tcomputerName, event.DstAddr, event.SessionID, event.AgentUrl, event.CONN0process, event.ClientComputerName, event.DstPid, event.DistribData, event.RmngrURL, event.CONN2process, event.CallID, event.Result, event.Request, event.Pid, event.InfoBase, event.Message, event.ServerComputerName, event.tconnectID, event.Usr, event.CONN1process, event.Administrator, event.SrcAddr, event.MName, event.EXCP0process, event.Ref, event.Nmb, event.UserName, event.Func, event.SrcPid, event.Calls, event.Txt, event.Descr, event.Exception, event.Level, event.SDBL, event.appid,
+			event.trans, event.rows, event.dstclientid, event._interface, event.iname, event.method,
+			event.memory, event.memorypeak, event.inbytes, event.outbytes, event.cputime, event.waitconnections,
+			event.dbpid, event.rowsaffected, event.body, event.status, event.callwait, event.regions, event.locks,
+			event.sql, event.uri, event.headers, event.phrase, event.first, event.ablename, event.prm, event.processname,
+			event.srcprocessname,
+			event.tablename, event.callQlevel, event.retexcp, event.scallPlevel)
 		if err != nil {
 			tx.Rollback()
 		}
