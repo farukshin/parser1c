@@ -23,7 +23,7 @@
 
 <a name="installSource"></a> 
 
-#### Установка из исходников
+### Установка из исходников
 
 ```
 git clone https://github.com/farukshin/parser1c.git
@@ -41,7 +41,7 @@ go build .
 ``` bash
 VERSION=$(curl -s "https://api.github.com/repos/farukshin/parser1c/releases/latest" | jq -r '.tag_name')
 ```
-Или установите необходимую версию релиза:
+Или установить необходимую версию релиза:
 
 ``` bash
 VERSION=vX.Y.Z
@@ -52,7 +52,7 @@ VERSION=vX.Y.Z
 ``` bash
 OS=Linux       # or Darwin, Windows
 ARCH=x86_64    # or arm64, x86_64, armv6, i386, s390x
-FILE=mon_${OS}_${ARCH}.tar.gz
+FILE=parser1c_${OS}_${ARCH}.tar.gz
 curl -sL "https://github.com/farukshin/parser1c/releases/download/${VERSION}/${FILE}" > ${FILE}
 ```
 
@@ -63,7 +63,7 @@ curl -sL https://github.com/farukshin/parser1c/releases/download/${VERSION}/pars
 shasum --check --ignore-missing ./parser1c_checksums.txt
 ```
 
-4. распаковка в каталоге PATH.
+4. Распаковать парсер
 
 ``` bash
 tar -zxvf ${FILE} parser1c
