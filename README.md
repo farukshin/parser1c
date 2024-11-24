@@ -10,9 +10,12 @@
 Многопоточный парсер логов технологического журнала 1С с выгрузкой в PostgreSQL.
 
 * [Установка](#install)
-* * [Установка из релизов](#installRelease)
 * * [Установка из исходников](#installSource)
+* * [Установка из релизов](#installRelease)
+* * [Установка из docker образа](#installDocker)
 * [Использование](#usage)
+* * [Запуск из консоли](#runcli)
+* * [Запуск в docker образе](#rundocker)
 * [Анализ логов технологического журнала в SQL](#sql)
 * [Нашли ошибку?](#err)
 * [Лицензия](#lic)
@@ -72,9 +75,36 @@ tar -zxvf ${FILE} parser1c
 ./parser1c --version
 ```
 
+<a name="installDocker"></a> 
+
+### Установка из docker образа
+
+`parser1c` можно запустить из docker образа. Сам образ можно скачать из docker hub'a
+
+```
+docker push farukshin/parser1c
+```
+или собрать локально
+
+```
+git clone https://github.com/farukshin/parser1c.git
+cd parser1c
+docker build -t farukshin/parser1c .
+```
+
+Образ `farukshin/parser1c` создан на базе `scratch`, поэтому итоговый размер образа 5MB
+```
+docker images | grep "farukshin/parser1c"
+> farukshin/parser1c                  v0.1.5    3a6752e4f686   13 minutes ago   5MB
+```
+
 <a name="usage"></a> 
 
 ## Использование
+
+<a name="runcli"></a> 
+
+### Запуск из консоли
 
 ```
 Строка запуска: parser1c [Опции]
@@ -82,14 +112,14 @@ tar -zxvf ${FILE} parser1c
 Опции:
 -h --help - вызов справки
 -v --version - версия приложения
---input - каталог с логами технологического журнала или имя файла с логами
---output - приемник (на данный момент только postgres)
+--input - каталог с логами технологического журнала или имя файла с логами (либо env PARSER1C_INPUT)
+--output - приемник, на данный момент только postgres (либо env PARSER1C_OUTPUT)
 --host - хост PostgreSQL (либо env PG_HOST)
 --port - порт PostgreSQL (либо env PG_PORT)
 --user - пользователь PostgreSQL (либо env PG_USER)
 --password - пароль PostgreSQL (либо env PG_PASSWORD)
 --dbname - база данных PostgreSQL (либо env PG_DBNAME)
---countRuner - количество потоков парсера, по умолчанию 1
+--countRuner - количество потоков парсера (либо env PARSER1C_COUNTRUNER, необязательный параметр, по умолчанию 1)
 ```
 
 Допустим, в настройках сбора технологического журнала каталог сбора логов указан `/var/log/1c`:
@@ -132,6 +162,25 @@ PG_DBNAME=alsu
     --countrunner=8
 ```
 
+<a name="rundocker"></a> 
+
+### Запуск в docker образе
+
+Для запуска парсера ТЖ необходимо в контейнер пробросить каталог с логами ТЖ, через `volume`. Если логи на хостовой машине пишутся в `/var/log/1c`, тогда парсер можно запустить следующим образом:
+
+```
+docker run --rm \
+    --volume /var/log/1c:/var/log/1c \
+    -e PG_HOST='192.168.0.224' \
+    -e PG_PORT='5432' \
+    -e PG_USER='usrparser1c' \
+    -e PG_PASSWORD='mypass' \
+    -e PG_DBNAME='alsu' \
+    -e PARSER1C_INPUT='/var/log/1c' \
+    -e PARSER1C_OUTPUT='postgres' \
+    farukshin/parser1c:v0.1.5
+```
+
 <a name="sql"></a> 
 
 ## Анализ логов технологического журнала в SQL
@@ -150,7 +199,7 @@ PG_DBNAME=alsu
 
 ## Лицензия
 
-Parser1c выпускается под лицензией MIT. Подробнее [LICENSE.md](https://github.com/farukshin/parser1c/blob/main/LICENSE.md)
+`parser1c` выпускается под лицензией MIT. Подробнее [LICENSE.md](https://github.com/farukshin/parser1c/blob/main/LICENSE.md)
 
 <a name="faq"></a> 
 

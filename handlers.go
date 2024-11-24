@@ -21,14 +21,14 @@ func helpHomeStr() string {
 	sb.WriteString("Опции:\n")
 	sb.WriteString("-h --help - вызов справки\n")
 	sb.WriteString("-v --version - версия приложения\n")
-	sb.WriteString("--input - каталог с логами технологического журнала или имя файла с логами\n")
-	sb.WriteString("--output - приемник (на данный момент только postgres)\n")
+	sb.WriteString("--input - каталог с логами технологического журнала или имя файла с логами (либо env PARSER1C_INPUT)\n")
+	sb.WriteString("--output - приемник, на данный момент только postgres (либо env PARSER1C_OUTPUT)\n")
 	sb.WriteString("--host - хост PostgreSQL (либо env PG_HOST)\n")
 	sb.WriteString("--port - порт PostgreSQL (либо env PG_PORT)\n")
 	sb.WriteString("--user - пользователь PostgreSQL (либо env PG_USER)\n")
 	sb.WriteString("--password - пароль PostgreSQL (либо env PG_PASSWORD)\n")
 	sb.WriteString("--dbname - база данных PostgreSQL (либо env PG_DBNAME)\n")
-	sb.WriteString("--countRuner - количество потоков парсера, по умолчанию 1\n\n")
+	sb.WriteString("--countRuner - количество потоков парсера (либо env PARSER1C_COUNTRUNER, необязательный параметр, по умолчанию 1)\n\n")
 
 	sb.WriteString("Пример запуска:\n")
 	sb.WriteString("./parser1c --input=/var/log/1c --output=postgres --host=localhost --port=5432 --user=postgres --password=postgres --countrunner=4 --dbname=alsu")
@@ -87,18 +87,18 @@ func isArgsAll(ar string) bool {
 
 func (app *application) parse() {
 
-	if !isArgsAll("--input,--output") {
-		app.help_home()
+	input, err := initArgs("--input", "PARSER1C_INPUT")
+	if err != nil {
+		app.errorLog.Println(err)
 		return
 	}
-	input, erri := getArgs("--input")
-	output, erro := getArgs("--output")
-	debug, _ := getArgs("--debug")
-	countRunerStr, _ := getArgs("--countRuner")
-	if input == "" || erri != nil || erro != nil || output == "" {
-		app.help_home()
+	output, err := initArgs("--output", "PARSER1C_OUTPUT")
+	if err != nil {
+		app.errorLog.Println(err)
 		return
 	}
+	debug, _ := initArgs("--debug", "PARS_DEBUG")
+	countRunerStr, _ := initArgs("--countRuner", "PARSER1C_COUNTRUNER")
 	countRuner, _ := strconv.Atoi(countRunerStr)
 	p := parser{Input: input, Output: output, Debug: debug, CountRuner: countRuner}
 	p.run()

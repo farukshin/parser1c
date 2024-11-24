@@ -12,7 +12,7 @@ type application struct {
 }
 
 var app = &application{
-	version: "v0.1.5",
+	version: "v0.1.6",
 }
 
 func main() {
