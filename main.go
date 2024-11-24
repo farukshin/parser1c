@@ -11,16 +11,14 @@ type application struct {
 	version  string
 }
 
+var app = &application{
+	version: "v0.1.5",
+}
+
 func main() {
 
-	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
-	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
-
-	app := &application{
-		errorLog: errorLog,
-		infoLog:  infoLog,
-		version:  "v0.1.5",
-	}
+	app.infoLog = log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
+	app.errorLog = log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 
 	app.parseArgs()
 }

@@ -22,12 +22,16 @@ func helpHomeStr() string {
 	sb.WriteString("-h --help - вызов справки\n")
 	sb.WriteString("-v --version - версия приложения\n")
 	sb.WriteString("--input - каталог с логами технологического журнала или имя файла с логами\n")
-	sb.WriteString("--format - формат вывода\n")
-	sb.WriteString("--countRuner - количество потоков парсера, по умолчанию 1\n")
-	sb.WriteString("--output - выходной файл\n\n")
+	sb.WriteString("--output - приемник (на данный момент только postgres)\n")
+	sb.WriteString("--host - хост PostgreSQL (либо env PG_HOST)\n")
+	sb.WriteString("--port - порт PostgreSQL (либо env PG_PORT)\n")
+	sb.WriteString("--user - пользователь PostgreSQL (либо env PG_USER)\n")
+	sb.WriteString("--password - пароль PostgreSQL (либо env PG_PASSWORD)\n")
+	sb.WriteString("--dbname - база данных PostgreSQL (либо env PG_DBNAME)\n")
+	sb.WriteString("--countRuner - количество потоков парсера, по умолчанию 1\n\n")
 
 	sb.WriteString("Пример запуска:\n")
-	sb.WriteString("./parser1c --input=./example/ --format=json --countRuner=4 --output=./log.json")
+	sb.WriteString("./parser1c --input=/var/log/1c --output=postgres --host=localhost --port=5432 --user=postgres --password=postgres --countrunner=4 --dbname=alsu")
 	return sb.String()
 }
 
@@ -83,24 +87,19 @@ func isArgsAll(ar string) bool {
 
 func (app *application) parse() {
 
-	if !isArgsAll("--input,--format") {
+	if !isArgsAll("--input,--output") {
 		app.help_home()
 		return
 	}
 	input, erri := getArgs("--input")
-	//output, erro := getArgs("--output")
-	format, errf := getArgs("--format")
+	output, erro := getArgs("--output")
 	debug, _ := getArgs("--debug")
 	countRunerStr, _ := getArgs("--countRuner")
-	//if input == "" || erri != nil || errf != nil || erro != nil {
-	if input == "" || erri != nil || errf != nil {
+	if input == "" || erri != nil || erro != nil || output == "" {
 		app.help_home()
 		return
 	}
-	if format == "" {
-		format = "json"
-	}
 	countRuner, _ := strconv.Atoi(countRunerStr)
-	p := parser{Input: input, Output: "", Format: format, Debug: debug, CountRuner: countRuner}
+	p := parser{Input: input, Output: output, Debug: debug, CountRuner: countRuner}
 	p.run()
 }

@@ -3,6 +3,8 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"os"
+	"strconv"
 	"time"
 
 	_ "github.com/lib/pq"
@@ -29,9 +31,44 @@ const (
 	pg_dbname   = "alsu"
 )
 
+func initArgs(str string, env string) (string, error) {
+
+	val, errh := getArgs(str)
+	if errh != nil {
+		val = os.Getenv(env)
+		if val == "" {
+			return "", fmt.Errorf("Не задан параметр %s. Задайте параметр %s в команде запуска или иницализируйте переменную окружения %s", str, str, env)
+		}
+	}
+	return val, nil
+}
+
 func (database *DataBase) openConnection() (*sql.DB, error) {
+
+	host, err := initArgs("--host", "PG_HOST")
+	if err != nil {
+		return nil, err
+	}
+	port, err := initArgs("--port", "PG_PORT")
+	if err != nil {
+		return nil, err
+	}
+	portInt, err := strconv.Atoi(port)
+	user, err := initArgs("--user", "PG_USER")
+	if err != nil {
+		return nil, err
+	}
+	password, err := initArgs("--password", "PG_PASSWORD")
+	if err != nil {
+		return nil, err
+	}
+	dbname, err := initArgs("--dbname", "PG_DBNAME")
+	if err != nil {
+		return nil, err
+	}
+
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-		pg_host, pg_port, pg_user, pg_password, pg_dbname)
+		host, portInt, user, password, dbname)
 	db, err := sql.Open("postgres", psqlInfo)
 	return db, err
 }
@@ -212,11 +249,17 @@ func (dbs *DataBase) loadTjFiles() ([]TjFiles, error) {
 }
 
 func (dbs *DataBase) saveEvents(fileName string, events []*Event) error {
+	if events == nil || len(events) == 0 {
+		return nil
+	}
 	tx, err := dbs.DB.Begin()
 	if err != nil {
 		return err
 	}
 	for _, event := range events {
+		if event == nil {
+			continue
+		}
 		_, err = tx.Exec(`INSERT INTO events (time, duration, name, eventlevel, log, ConnectString, ServiceName, res, OSThread, ExtData, SESN1process, ClientID, Err, Appl, DstId, pprocessName, DataBase, Url, Event, SrcId, ID, Info, process, ATTN0process, tclientID, IB, TargetCall, DBMS, Context, SrcName, tapplicationName, ApplicationExt, Data, Protected, ProcessId, tcomputerName, DstAddr, SessionID, AgentUrl, CONN0process, ClientComputerName, DstPid, DistribData, RmngrURL, CONN2process, CallID, Result, Request, Pid, InfoBase, Message, ServerComputerName, tconnectID, Usr, CONN1process, Administrator, SrcAddr, MName, EXCP0process, Ref, Nmb, UserName, Func, SrcPid, Calls, Txt, Descr, Exception, Level, SDBL, 
 				appid, trans, rows, dstclientid, interface, iname, method,
 				memory, memorypeak, inbytes, outbytes, cputime, waitconnections, dbpid, rowsaffected, body, status, 

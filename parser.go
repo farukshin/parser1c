@@ -40,10 +40,11 @@ func (p *parser) searchFiles() ([]string, error) {
 }
 func (p *parser) run() error {
 
-	if p.Format == "postgres" {
+	if p.Output == "postgres" {
 		err := db.Init()
 		if err != nil {
-			panic(err)
+			app.errorLog.Println(err)
+			return err
 		}
 	}
 
@@ -408,7 +409,8 @@ func ostUpdate(cur string) ([]string, string) {
 
 func check(e error) {
 	if e != nil {
-		panic(e)
+		app.errorLog.Println(e)
+		//panic(e)
 	}
 }
 

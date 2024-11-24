@@ -5,19 +5,14 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Парсинг файла",
-            "type": "go",
-            "args": ["--input=./example/TJ/rphost_160/24051511.log", "--format=json"]
-        },
-        {
-            "name": "Парсинг каталога",
-            "type": "go",
-            "args": ["--input=./example/TJ/", "--format=json", "--output=./out/out.json"]
-        },
-        {
-            "name": "Парсинг каталога отправка в postgres",
+            "name": "Парсинг ТЖ и отправка в postgres",
             "type": "go",
             "args": ["--input=./example/TJ/", "--format=postgres"]
+        },
+        {
+            "name": "Парсинг ТЖ var/log и отправка в postgres",
+            "type": "go",
+            "args": ["--input=/var/log/1c", "--output=postgres", "--host=localhost", "--port=5432", "--user=postgres", "--password=postgres", "--countrunner=4", "--dbname=alsu"]
         },
         {
             "name": "Version",
